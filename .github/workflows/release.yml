@@ -2,8 +2,6 @@ name: Release
 
 on:
   push:
-    tags:
-      - "*" # triggers only if push new tag version, like `0.8.4` or else
 
 jobs:
   build:
@@ -16,6 +14,12 @@ jobs:
         with:
           fetch-depth: 0 # See: https://goreleaser.com/ci/actions/
 
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -26,6 +30,12 @@ jobs:
         uses: goreleaser/goreleaser-action@master
         with:
           version: latest
-          args: release --rm-dist
+          args: release --clean -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload assets
+        uses: actions/upload-artifact@v3
+        with:
+          name: "${{ github.event.repository.name }}"
+          path: ./dist/*
