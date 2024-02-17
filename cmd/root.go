@@ -15,19 +15,15 @@ import (
 )
 
 var version = "0.0.1"
-var terraform_version = "latest"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "tfdraw",
 	Version: version,
 	Short:   "Convert tf graph to a diagram format.",
-	Long: `This tool takes the terraform graph output and converts it to a given format.
-For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long: `This tool takes the terraform graph output and converts it to a mermaid diagram markdown format.
+Example:
+terraform show --json | tfdraw > diagram.md`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
@@ -72,10 +68,7 @@ func init() {
 	//rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.tfdraw.yaml)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-type terraformState struct {
+	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func decodeJSON(jsonData string) map[string]interface{} {
