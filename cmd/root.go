@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// We can override the version variable at build-time using ldflags: -ldflags="-X 'root.version=0.0.2'"
+// https://www.golinuxcloud.com/golang-cobra/#The_Version_Flag
 var version = "0.0.1"
 
 // rootCmd represents the base command when called without any subcommands
