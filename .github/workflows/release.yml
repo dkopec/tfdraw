@@ -5,21 +5,13 @@ on:
 
 jobs:
   build:
-    name: GoReleaser build
+    name: Build & Test
     runs-on: ubuntu-latest
-    # Add permission for release creation. Can be made narrower according to your needs
-    permissions: write-all
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
         with:
           fetch-depth: 0 # See: https://goreleaser.com/ci/actions/
-
-      - name: Bump version and push tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -27,16 +19,53 @@ jobs:
           go-version: 1.21
         id: go
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@master
+      - name: Install dependencies
+        run: go get .
+      - name: Build
+        run: go build -v
+      - name: Test with the Go CLI
+        run: go test
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    # Add permission for release creation.
+    permissions: write-all
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
         with:
-          version: latest
-          args: release --clean -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # See: https://goreleaser.com/ci/actions/
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.21
+        id: go
+      - name: Install dependencies
+        run: go get .
+      - name: Release Build
+        id: release
+        run: |
+          # Build for Windows
+          GOOS=windows GOARCH=amd64 go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'" -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}.exe"
 
-      - name: Upload assets
-        uses: actions/upload-artifact@v3
+          # Build for Linux
+          GOOS=linux GOARCH=amd64 go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'" -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}"
+
+          # Build for macOS
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'"  -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}"
+
+      - name: 🏁 Create Release
+        uses: ncipollo/release-action@v1.12.0
         with:
-          name: "${{ github.event.repository.name }}"
-          path: ./dist/*
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          generateReleaseNotes: true
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          artifacts: ./dist/*
