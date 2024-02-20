@@ -40,7 +40,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -52,13 +52,19 @@ jobs:
         id: release
         run: |
           # Build for Windows
-          GOOS=windows GOARCH=amd64 go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'" -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}.exe"
+          export GOOS=windows
+          export GOARCH=amd64
+          go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'" -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}.exe"
 
           # Build for Linux
-          GOOS=linux GOARCH=amd64 go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'" -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}"
+          export GOOS=linux
+          export GOARCH=amd64
+          go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'" -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}"
 
           # Build for macOS
-          GOOS=darwin GOARCH=amd64 go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'"  -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}"
+          export GOOS=darwin
+          export GOARCH=amd64
+          go build -ldflags="-X 'root.version=${{ steps.tag_version.outputs.new_tag }}'"  -o "./dist/${{ github.event.repository.name }}-${GOOS}-${GOARCH}"
 
       - name: 🏁 Create Release
         uses: ncipollo/release-action@v1.12.0
